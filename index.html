@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Audio PRO | Digital Lab</title>
+<style>
+    :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --accent: #22d3ee;
+        --accent-alt: #f472b6;
+        --text: #f1f5f9;
+        --border: #334155;
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .container {
+        max-width: 900px;
+        width: 100%;
+    }
+
+    h1 {
+        text-align: center;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: #0f172a;
+        color: white;
+        box-sizing: border-box;
+    }
+
+    button {
+        background: var(--accent);
+        color: var(--bg);
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    button:hover {
+        filter: brightness(1.2);
+        transform: translateY(-1px);
+        box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+    }
+
+    button.secondary {
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+    }
+
+    .audio-item {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    canvas {
+        width: 100%;
+        height: auto;
+        background: #000;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.1);
+    }
+
+    .controls-row {
+        display: flex;
+        gap: 10px;
+    }
+
+    label {
+        font-size: 0.85rem;
+        color: #94a3b8;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ Super Audio PRO</h1>
+
+    <div class="grid">
+        <div class="card">
+            <h2>🎧 Reproductor Multicanal</h2>
+            <div id="contenedor"></div>
+            <button onclick="agregarAudio()" class="secondary">➕ Agregar nuevo track</button>
+            <div class="controls-row">
+                <button onclick="reproducirTodos()">▶ PLAY ALL</button>
+                <button onclick="pausarTodos()" style="background: var(--accent-alt)">⏸ PAUSE</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🗣 Sintetizador de Voz</h2>
+            <button onclick="decirHola()" class="secondary">Rápido: "Hola"</button>
+            <label>Texto a voz personalizado:</label>
+            <input type="text" id="texto" placeholder="Escribe el mensaje aquí...">
+            <button onclick="leerTexto()">🔊 Procesar Voz</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎛 Laboratorio de Ondas (Digital Generator)</h2>
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div>
+                <label>Modo de Procesamiento:</label>
+                <select id="modo">
+                    <option value="normal">Ondas estándares</option>
+                    <option value="onda">Mensaje oculto en Onda</option>
+                    <option value="espectro">Mensaje en Espectrograma</option>
+                </select>
+
+                <label>Tipo de Oscilador:</label>
+                <select id="tipo">
+                    <option value="original">Frecuencia Base (20Hz)</option>
+                    <option value="sine">Sinusoidal</option>
+                    <option value="square">Cuadrada (Square)</option>
+                    <option value="sawtooth">Diente de Sierra</option>
+                </select>
+            </div>
+            <div>
+                <label>Frecuencia (Hz):</label>
+                <input type="number" id="freq" value="220">
+
+                <label>Mensaje Esteganográfico:</label>
+                <input type="text" id="mensaje" placeholder="Solo para modos mensaje...">
+            </div>
+        </div>
+        
+        <div class="controls-row">
+            <button onclick="generar()">🎵 GENERAR AUDIO</button>
+            <button onclick="descargar()" class="secondary">⬇ DESCARGAR (.WAV)</button>
+        </div>
+
+        <p style="margin-bottom: 5px; font-size: 0.8rem; color: var(--accent);">VISUALIZADOR EN TIEMPO REAL:</p>
+        <canvas id="canvas" width="800" height="250"></canvas>
+    </div>
+</div>
+
+<script>
+// El JavaScript se mantiene funcionalmente igual para no romper tu lógica, 
+// solo ajusté levemente el estilo del dibujo del canvas.
+
+let audios = [];
+let bufferGlobal = null;
+
+function agregarAudio() {
+  const index = audios.length;
+  audios.push(null);
+  const div = document.createElement("div");
+  div.className = "audio-item";
+  div.innerHTML = `
+    <input type="file" accept="audio/*" onchange="cargarArchivo(this, ${index})">
+    <button class="secondary" id="btn-play-${index}" style="font-size:0.8rem">Track ${index + 1} (Vacío)</button>
+  `;
+  document.getElementById("contenedor").appendChild(div);
+}
+
+function cargarArchivo(input, index) {
+  const file = input.files[0];
+  if (file) {
+    audios[index] = new Audio(URL.createObjectURL(file));
+    document.getElementById(`btn-play-${index}`).textContent = "▶ Reproducir: " + file.name.substring(0,15) + "...";
+    document.getElementById(`btn-play-${index}`).onclick = () => {
+      audios[index].currentTime = 0;
+      audios[index].play();
+    };
+  }
+}
+
+function reproducirTodos() {
+  audios.forEach(a => { if (a) { a.currentTime = 0; a.play(); } });
+}
+
+function pausarTodos() {
+  audios.forEach(a => { if (a) a.pause(); });
+}
+
+function decirHola() {
+  speechSynthesis.speak(new SpeechSynthesisUtterance("hola"));
+}
+
+function leerTexto() {
+  const txt = document.getElementById("texto").value;
+  if (!txt.trim()) return;
+  speechSynthesis.speak(new SpeechSynthesisUtterance(txt));
+}
+
+function generar() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const sr = ctx.sampleRate;
+  const dur = 4;
+  const samples = sr * dur;
+  const buffer = ctx.createBuffer(1, samples, sr);
+  const data = buffer.getChannelData(0);
+
+  const modo = document.getElementById("modo").value;
+  const tipo = document.getElementById("tipo").value;
+  const freq = parseFloat(document.getElementById("freq").value);
+  const mensaje = document.getElementById("mensaje").value;
+
+  if (modo === "espectro" && mensaje) {
+    const c = document.createElement("canvas");
+    c.width = 600; c.height = 200;
+    const g = c.getContext("2d");
+    g.fillStyle = "black"; g.fillRect(0,0,c.width,c.height);
+    g.fillStyle = "white"; g.font = "bold 80px Arial";
+    g.textAlign = "center"; g.fillText(mensaje, c.width/2, c.height/2);
+    const img = g.getImageData(0,0,c.width,c.height).data;
+
+    for (let i = 0; i < samples; i++) {
+      const t = i / sr;
+      const x = Math.floor((i / samples) * c.width);
+      let value = 0;
+      for (let y = 0; y < c.height; y+=4) {
+        const idx = (y * c.width + x) * 4;
+        if (img[idx] > 128) {
+          const f = 200 + ((c.height - y) / c.height) * 2000;
+          value += Math.sin(2 * Math.PI * f * t) * 0.02;
+        }
+      }
+      data[i] = value;
+    }
+  } else if (modo === "onda" && mensaje) {
+    const c = document.createElement("canvas");
+    c.width = 600; c.height = 200;
+    const g = c.getContext("2d");
+    g.fillStyle = "black"; g.fillRect(0,0,c.width,c.height);
+    g.fillStyle = "white"; g.font = "bold 100px Arial";
+    g.textAlign = "center"; g.fillText(mensaje, c.width/2, c.height/2 + 30);
+    const img = g.getImageData(0,0,c.width,c.height).data;
+
+    for (let i = 0; i < samples; i++) {
+      const x = Math.floor((i / samples) * c.width);
+      let suma = 0;
+      for (let y = 0; y < c.height; y++) {
+        const idx = (y * c.width + x) * 4;
+        suma += img[idx];
+      }
+      data[i] = (suma / c.height / 255 - 0.5) * 2;
+    }
+  } else {
+    for (let i = 0; i < samples; i++) {
+      const t = i / sr;
+      if (tipo === "original") {
+        const x = t * 2 * Math.PI * 20;
+        data[i] = 0.3 * (Math.sin(10*x) + Math.sin(11*x));
+      } else {
+        const phase = 2 * Math.PI * freq * t;
+        if (tipo === "sine") data[i] = Math.sin(phase);
+        if (tipo === "square") data[i] = Math.sign(Math.sin(phase));
+        if (tipo === "sawtooth") data[i] = 2 * (t * freq - Math.floor(0.5 + t * freq));
+      }
+    }
+  }
+
+  bufferGlobal = buffer;
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  src.start();
+  dibujar(data);
+}
+
+function dibujar(data) {
+  const canvas = document.getElementById("canvas");
+  const g = canvas.getContext("2d");
+  g.clearRect(0,0,canvas.width,canvas.height);
+  
+  // Estilo de línea neón
+  g.strokeStyle = "#22d3ee";
+  g.lineWidth = 2;
+  g.shadowBlur = 10;
+  g.shadowColor = "#22d3ee";
+  
+  g.beginPath();
+  const step = Math.floor(data.length / canvas.width);
+  for (let i = 0; i < canvas.width; i++) {
+    const idx = i * step;
+    const y = (data[idx] * 100) + canvas.height/2;
+    if (i === 0) g.moveTo(i, y);
+    else g.lineTo(i, y);
+  }
+  g.stroke();
+}
+
+function descargar() {
+  if (!bufferGlobal) return;
+  const wav = crearWav(bufferGlobal);
+  const blob = new Blob([wav], {type:"audio/wav"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "sonido_pro.wav";
+  a.click();
+}
+
+function crearWav(buffer) {
+  const n = buffer.length;
+  const sr = buffer.sampleRate;
+  const data = buffer.getChannelData(0);
+  const arr = new ArrayBuffer(44 + n*2);
+  const view = new DataView(arr);
+  function w(v,o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+  w(view,0,'RIFF');
+  view.setUint32(4,36+n*2,true);
+  w(view,8,'WAVE');
+  w(view,12,'fmt ');
+  view.setUint32(16,16,true);
+  view.setUint16(20,1,true);
+  view.setUint16(22,1,true);
+  view.setUint32(24,sr,true);
+  view.setUint32(28,sr*2,true);
+  view.setUint16(32,2,true);
+  view.setUint16(34,16,true);
+  w(view,36,'data');
+  view.setUint32(40,n*2,true);
+  let off=44;
+  for(let i=0;i<n;i++){
+    const s=Math.max(-1,Math.min(1,data[i]));
+    view.setInt16(off,s*32767,true);
+    off+=2;
+  }
+  return arr;
+}
+</script>
+
+</body>
+</html>
